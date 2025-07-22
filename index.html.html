@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Tracker Course - PWA</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTW9uIFRyYWNrZXIgQ291cnNlIiwic2hvcnRfbmFtZSI6IlJ1bm5pbmciLCJzdGFydF91cmwiOiIuLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNFOTFFNjMiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTWpRd0lpQm9aV2xuYUhROUlqSTBNQ0lpSUhacFpYZENiM2c5SWpBZ01DQXlOREFnTWpRd0lpQm1hV3hzUFNJalpEUmxaRFJoSWlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpUGp4amFYSmpiR1VnWTNnOUlqRXlNQ0lpSUdONVBTSXhNakFpSUhJOUlqWXdJaUJtYVd4c1BTSWpaVGt4WldZeklpOCtQSEJoZEdnZ1pEMGlUVGt3SURBZ01URTFJRGt3SURFeU1DQXpNQ0V4TURVdE5qQWdOakFnTmpBdE5qQWdOakIwTmpBZ05qQWdOVEF0TlRBZ05qQXROakJNT1RBZ01GcGlJaUJtYVd4c1BTSWpabVptSWk4K1BDOXpkbWMrIiwic2l6ZXMiOiIyNDB4MjQwIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    
+    <!-- Meta tags pour PWA -->
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Running Tracker">
+    
+    <!-- Firebase SDKs -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #ff9ff3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .auth-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .sync-status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #E91E63, #AD1457);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-left: 5px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card.distance { border-left-color: #E91E63; }
+        .stat-card.tempo { border-left-color: #FF5722; }
+        .stat-card.endurance { border-left-color: #4CAF50; }
+        .stat-card.duree { border-left-color: #9C27B0; }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .phases-container {
+            margin-bottom: 30px;
+        }
+
+        .phases-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .phase-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .phase-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .phase-btn.mois1 { background: #4CAF50; }
+        .phase-btn.mois2 { background: #2196F3; }
+        .phase-btn.mois3 { background: #FF9800; }
+        .phase-btn.mois4 { background: #E91E63; }
+        .phase-btn.mois5 { background: #9C27B0; }
+        .phase-btn.mois6 { background: #FF5722; }
+
+        .phase-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .phase-btn.active {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            transform: scale(1.1);
+            filter: brightness(1.3);
+            border: 3px solid white;
+        }
+
+        .week-planner {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: 1fr 250px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .week-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        .day-item {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #ddd;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .day-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .day-item.completed {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-left-color: #28a745;
+        }
+
+        .day-item.endurance { border-left-color: #4CAF50; }
+        .day-item.tempo { border-left-color: #FF5722; }
+        .day-item.fractionne { border-left-color: #E91E63; }
+        .day-item.long { border-left-color: #9C27B0; }
+        .day-item.repos { border-left-color: #607D8B; }
+
+        .activity-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .progress-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .progress-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-percentage {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #E91E63;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E91E63, #AD1457);
+            border-radius: 6px;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+
+        .gauge {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #E91E63 0deg, #E91E63 var(--percentage), #e0e0e0 var(--percentage), #e0e0e0 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .gauge::before {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .gauge-value {
+            position: absolute;
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            z-index: 1;
+        }
+
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #E91E63;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #E91E63, #AD1457);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .data-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #E91E63;
+        }
+
+        .achievements {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .motivational-quote {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-style: italic;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(233, 30, 99, 0.1);
+            border-radius: 8px;
+        }
+
+        .summary-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #E91E63;
+        }
+
+        .summary-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .tips-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #E91E63;
+        }
+
+        .tips-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #E91E63;
+            margin-bottom: 10px;
+        }
+
+        .tips-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tips-list li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .tips-list li::before {
+            content: "🏃‍♂️ ";
+            margin-right: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 2px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.edit {
+            background: #2196F3;
+            color: white;
+        }
+
+        .action-btn.delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .install-prompt {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .install-btn {
+            background: white;
+            color: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Section d'authentification -->
+        <div class="auth-section" id="authSection">
+            <div id="loginSection">
+                <h3>🔐 Connectez-vous pour synchroniser vos données</h3>
+                <p>Vos courses seront sauvegardées dans le cloud et accessibles partout !</p>
+                <button class="auth-btn" onclick="loginWithGoogle()">📱 Se connecter avec Google</button>
+                <button class="auth-btn" onclick="loginWithEmail()">✉️ Se connecter avec Email</button>
+                <span class="sync-status">📱 Données locales uniquement</span>
+            </div>
+            <div id="userSection" class="hidden">
+                <span>👋 Salut <span id="userName"></span>!</span>
+                <span class="sync-status" id="syncStatus">☁️ Synchronisé</span>
+                <button class="auth-btn" onclick="logout()" style="background: #ff6b6b; color: white;">🚪 Déconnexion</button>
+            </div>
+        </div>
+
+        <!-- Prompt d'installation PWA -->
+        <div class="install-prompt hidden" id="installPrompt">
+            <h3>📱 Installer l'Application</h3>
+            <p>Installez votre tracker sur votre téléphone pour un accès rapide !</p>
+            <button class="install-btn" onclick="installApp()">⬇️ Installer maintenant</button>
+        </div>
+
+        <div class="header">
+            <h1>🏃‍♂️ MON TRACKER COURSE</h1>
+            <p class="subtitle">Synchronisé sur tous vos appareils - Accessible partout</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card distance">
+                <div class="stat-value" id="totalDistance">0</div>
+                <div class="stat-label">KM TOTAL</div>
+            </div>
+            <div class="stat-card tempo">
+                <div class="stat-value" id="averagePace">0:00</div>
+                <div class="stat-label">ALLURE MOYENNE</div>
+            </div>
+            <div class="stat-card endurance">
+                <div class="stat-value" id="totalSessions">0</div>
+                <div class="stat-label">SÉANCES TOTAL</div>
+            </div>
+            <div class="stat-card duree">
+                <div class="stat-value">6</div>
+                <div class="stat-label">MOIS PROGRAMME</div>
+            </div>
+        </div>
+
+        <div class="phases-container">
+            <div class="phases-header">
+                <h2>Progression Mensuelle</h2>
+                <div class="phase-buttons">
+                    <button class="phase-btn mois1 active" data-mois="mois1">Mois 1</button>
+                    <button class="phase-btn mois2" data-mois="mois2">Mois 2</button>
+                    <button class="phase-btn mois3" data-mois="mois3">Mois 3</button>
+                    <button class="phase-btn mois4" data-mois="mois4">Mois 4</button>
+                    <button class="phase-btn mois5" data-mois="mois5">Mois 5</button>
+                    <button class="phase-btn mois6" data-mois="mois6">Mois 6</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="week-planner" id="weekPlanner">
+            <!-- Contenu généré par JavaScript -->
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-card">
+                <div class="progress-header">
+                    <div class="progress-title">📈 Progression Mensuelle</div>
+                    <div class="progress-percentage" id="monthlyPercentage">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="monthlyProgress" style="width: 0%; background: linear-gradient(90deg, #FF5722, #D84315);"></div>
+                </div>
+                <p>Objectif: <span id="monthlyObjectif">72 km/mois</span></p>
+                <p>Réalisé: <span id="monthlyRealise">0 km</span> ce mois</p>
+            </div>
+
+            <div class="progress-card">
+                <div class="progress-header">
+                    <div class="progress-title">🏆 Progression Globale</div>
+                    <div class="progress-percentage" id="totalPercentage">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="totalProgress" style="width: 0%; background: linear-gradient(90deg, #4CAF50, #388E3C);"></div>
+                </div>
+                <p>Objectif: <span id="totalObjectif">892 km</span> sur 6 mois</p>
+                <p>Réalisé: <span id="totalRealise">0 km</span> depuis le début</p>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3 style="margin-bottom: 20px; color: #333;">📝 Enregistrer une Course</h3>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="dateInput">
+                </div>
+                <div class="input-group">
+                    <label>Type de Séance</label>
+                    <select id="sessionType">
+                        <option value="">-- Choisir --</option>
+                        <option value="endurance">🟢 Endurance Facile</option>
+                        <option value="tempo">🟡 Tempo / Allure Soutenue</option>
+                        <option value="fractionne">🔴 Fractionné / Intervalles</option>
+                        <option value="long">🟣 Sortie Longue</option>
+                        <option value="repos">⚪ Repos Actif / Récupération</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Distance (km)</label>
+                    <input type="number" step="0.1" placeholder="Ex: 5.0" id="distanceInput">
+                </div>
+                <div class="input-group">
+                    <label>Durée (min)</label>
+                    <input type="number" placeholder="Ex: 30" id="dureeInput">
+                </div>
+                <div class="input-group">
+                    <label>Ressenti (1-10)</label>
+                    <input type="number" min="1" max="10" placeholder="Ex: 7" id="ressentiInput">
+                </div>
+                <div class="input-group">
+                    <label>Notes</label>
+                    <input type="text" placeholder="Comment vous êtes-vous senti ?" id="notesInput">
+                </div>
+            </div>
+            <button class="save-btn" id="saveBtn">💾 Enregistrer la Course</button>
+            
+            <div class="data-display" id="workoutHistory" style="display: none;">
+                <h4>📊 Historique des Courses</h4>
+                <div id="historyContent"></div>
+                <div class="summary-stats" id="monthStats"></div>
+                <div style="text-align: center; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px;">
+                    <button id="clearAllBtn" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        🗑️ Effacer Toutes les Données
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tips-section" id="tipsSection">
+            <!-- Conseils générés par JavaScript -->
+        </div>
+
+        <div class="achievements" id="achievementsSection">
+            <h3 style="margin-bottom: 20px; color: #333;">🏆 Achievements</h3>
+            <p style="color: #666;">Commencez à courir pour débloquer vos premiers achievements !</p>
+        </div>
+
+        <div class="motivational-quote">
+            "Vos données vous suivent partout - Continuez à courir, votre progression est sauvegardée !" 🏃‍♂️💫
+        </div>
+    </div>
+
+    <script type="module">
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBIC6DVQbKJ9e2df54Gl5326NMi11fCPA",
+            authDomain: "mon-tracker-course.firebaseapp.com",
+            projectId: "mon-tracker-course",
+            storageBucket: "mon-tracker-course.firebasestorage.app",
+            messagingSenderId: "586843408628",
+            appId: "1:586843408628:web:d16b2ad3354c3588ecb6a1"
+        };
+
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Initialize Firebase
+        let app, auth, db;
+        let isFirebaseEnabled = false;
+
+        try {
+            // Initialiser Firebase avec votre configuration
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            isFirebaseEnabled = true;
+            console.log("🔥 Firebase activé et connecté à votre projet !");
+        } catch (error) {
+            console.log("⚠️ Erreur Firebase:", error);
+            isFirebaseEnabled = false;
+        }
+
+        // Variables globales
+        let moisActuel = 'mois1';
+        let donneesEntrainement = [];
+        let activitesTerminees = {};
+        let editingId = null;
+        let currentUser = null;
+        let deferredPrompt;
+        
+        // Programmes mensuels (identiques à votre version)
+        const programmes = {
+            mois1: {
+                titre: "Mois 1: Construction de la Base",
+                soustitre: "4-8 km • Habituer le corps à courir régulièrement",
+                kmSemaine: 18,
+                kmMois: 72,
+                conseils: [
+                    "Privilégiez la régularité à l'intensité",
+                    "Courez à allure conversationnelle",
+                    "Écoutez votre corps et reposez-vous si besoin",
+                    "Investissez dans de bonnes chaussures de running"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course facile", icone: "🟢", duree: "25-30 min", distance: "4 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Course endurance", icone: "🟢", duree: "35-40 min", distance: "6 km", type: "endurance"},
+                    {jour: "Samedi", activite: "Sortie longue", icone: "🟣", duree: "45-55 min", distance: "8 km", type: "long"}
+                ]
+            },
+            mois2: {
+                titre: "Mois 2: Développement de l'Endurance",
+                soustitre: "6-12 km • Augmentation progressive des distances",
+                kmSemaine: 27,
+                kmMois: 108,
+                conseils: [
+                    "Augmentez la distance progressivement (10% par semaine max)",
+                    "Maintenez une allure confortable",
+                    "Travaillez votre technique de course",
+                    "Hydratez-vous avant, pendant et après"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course facile", icone: "🟢", duree: "30-35 min", distance: "6 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Course tempo", icone: "🟡", duree: "40-45 min", distance: "8 km", type: "tempo"},
+                    {jour: "Samedi", activite: "Sortie longue", icone: "🟣", duree: "60-70 min", distance: "12 km", type: "long"}
+                ]
+            },
+            mois3: {
+                titre: "Mois 3: Introduction à la Vitesse",
+                soustitre: "8-15 km • Premiers fractionnés et travail de vitesse",
+                kmSemaine: 37,
+                kmMois: 148,
+                conseils: [
+                    "Introduisez le travail fractionné progressivement",
+                    "Échauffez-vous bien avant les séances intenses",
+                    "Récupérez activement entre les répétitions",
+                    "Ne négligez pas les étirements post-course"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course facile", icone: "🟢", duree: "35-40 min", distance: "8 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Fractionné court", icone: "🔴", duree: "45-50 min", distance: "10 km", type: "fractionne"},
+                    {jour: "Samedi", activite: "Sortie longue", icone: "🟣", duree: "70-80 min", distance: "15 km", type: "long"}
+                ]
+            },
+            mois4: {
+                titre: "Mois 4: Travail au Tempo",
+                soustitre: "10-18 km • Amélioration de l'allure seuil",
+                kmSemaine: 42,
+                kmMois: 168,
+                conseils: [
+                    "Le tempo = allure soutenue mais contrôlée",
+                    "Respirez de manière rythmée",
+                    "Variez les terrains d'entraînement",
+                    "Planifiez vos courses en fonction de vos objectifs"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course récupération", icone: "🟢", duree: "40-45 min", distance: "10 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Séance tempo", icone: "🟡", duree: "50-60 min", distance: "14 km", type: "tempo"},
+                    {jour: "Samedi", activite: "Sortie longue", icone: "🟣", duree: "80-90 min", distance: "18 km", type: "long"}
+                ]
+            },
+            mois5: {
+                titre: "Mois 5: Optimisation des Performances",
+                soustitre: "12-20 km • Perfectionnement technique et mental",
+                kmSemaine: 47,
+                kmMois: 188,
+                conseils: [
+                    "Travaillez votre stratégie de course",
+                    "Testez votre nutrition en course",
+                    "Pratiquez la visualisation mentale",
+                    "Simulez les conditions de votre objectif"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course technique", icone: "🟢", duree: "45-50 min", distance: "12 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Intervalles longs", icone: "🔴", duree: "55-65 min", distance: "15 km", type: "fractionne"},
+                    {jour: "Samedi", activite: "Course longue", icone: "🟣", duree: "90-100 min", distance: "20 km", type: "long"}
+                ]
+            },
+            mois6: {
+                titre: "Mois 6: Préparation Compétition",
+                soustitre: "15-25 km • Affûtage et test en situation",
+                kmSemaine: 52,
+                kmMois: 208,
+                conseils: [
+                    "Réduisez le volume tout en gardant l'intensité",
+                    "Testez votre équipement de course",
+                    "Préparez votre stratégie de course",
+                    "Reposez-vous bien avant l'objectif"
+                ],
+                seances: [
+                    {jour: "Lundi", activite: "Course d'activation", icone: "🟢", duree: "50-55 min", distance: "15 km", type: "endurance"},
+                    {jour: "Mercredi", activite: "Test allure objectif", icone: "🟡", duree: "60-70 min", distance: "18 km", type: "tempo"},
+                    {jour: "Samedi", activite: "Course objectif", icone: "🏆", duree: "110-120 min", distance: "25 km", type: "long"}
+                ]
+            }
+        };
+
+        // === AUTHENTIFICATION ===
+        window.loginWithGoogle = async function() {
+            if (!isFirebaseEnabled) {
+                alert("🔧 Firebase n'est pas configuré. Vos données restent en local.");
+                return;
+            }
+
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                console.log("✅ Connexion Google réussie");
+            } catch (error) {
+                console.error("❌ Erreur connexion Google:", error);
+                alert("Erreur de connexion. Vérifiez votre configuration Firebase.");
+            }
+        };
+
+        window.loginWithEmail = function() {
+            if (!isFirebaseEnabled) {
+                alert("🔧 Firebase n'est pas configuré. Vos données restent en local.");
+                return;
+            }
+
+            const email = prompt("Entrez votre email:");
+            const password = prompt("Entrez votre mot de passe:");
+            
+            if (!email || !password) return;
+
+            // Tentative de connexion
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    console.log("✅ Connexion email réussie");
+                })
+                .catch((error) => {
+                    // Si l'utilisateur n'existe pas, le créer
+                    if (error.code === 'auth/user-not-found') {
+                        createUserWithEmailAndPassword(auth, email, password)
+                            .then((userCredential) => {
+                                console.log("✅ Compte créé et connecté");
+                            })
+                            .catch((error) => {
+                                console.error("❌ Erreur création compte:", error);
+                                alert("Erreur lors de la création du compte");
+                            });
+                    } else {
+                        console.error("❌ Erreur connexion:", error);
+                        alert("Erreur de connexion");
+                    }
+                });
+        };
+
+        window.logout = async function() {
+            if (!isFirebaseEnabled) return;
+            
+            try {
+                await signOut(auth);
+                console.log("✅ Déconnexion réussie");
+            } catch (error) {
+                console.error("❌ Erreur déconnexion:", error);
+            }
+        };
+
+        // === GESTION PWA ===
+        // Écouter l'événement d'installation PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.remove('hidden');
+        });
+
+        window.installApp = function() {
+            if (!deferredPrompt) {
+                alert("L'installation automatique n'est pas disponible. Utilisez le menu de votre navigateur pour 'Ajouter à l'écran d'accueil'");
+                return;
+            }
+
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ PWA installée');
+                    document.getElementById('installPrompt').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        };
+
+        // === SYNCHRONISATION DES DONNÉES ===
+        async function sauvegarderDansFirebase() {
+            if (!isFirebaseEnabled || !currentUser) return;
+
+            try {
+                // Sauvegarder les courses
+                const coursesRef = collection(db, 'users', currentUser.uid, 'courses');
+                for (const course of donneesEntrainement) {
+                    await setDoc(doc(coursesRef, course.id.toString()), course);
+                }
+
+                // Sauvegarder les activités terminées
+                await setDoc(doc(db, 'users', currentUser.uid, 'data', 'activities'), {
+                    activitesTerminees: activitesTerminees,
+                    lastSync: new Date()
+                });
+
+                mettreAJourStatutSync("☁️ Synchronisé");
+            } catch (error) {
+                console.error("❌ Erreur sauvegarde Firebase:", error);
+                mettreAJourStatutSync("⚠️ Erreur sync");
+            }
+        }
+
+        async function chargerDepuisFirebase() {
+            if (!isFirebaseEnabled || !currentUser) return;
+
+            try {
+                mettreAJourStatutSync("🔄 Synchronisation...");
+
+                // Charger les courses
+                const coursesRef = collection(db, 'users', currentUser.uid, 'courses');
+                const coursesSnapshot = await getDocs(coursesRef);
+                donneesEntrainement = [];
+                coursesSnapshot.forEach((doc) => {
+                    donneesEntrainement.push(doc.data());
+                });
+
+                // Charger les activités terminées
+                const activitiesRef = doc(db, 'users', currentUser.uid, 'data', 'activities');
+                const activitiesDoc = await getDoc(activitiesRef);
+                if (activitiesDoc.exists()) {
+                    activitesTerminees = activitiesDoc.data().activitesTerminees || {};
+                }
+
+                mettreAJourToutLAffichage();
+                mettreAJourStatutSync("☁️ Synchronisé");
+            } catch (error) {
+                console.error("❌ Erreur chargement Firebase:", error);
+                mettreAJourStatutSync("⚠️ Erreur sync");
+            }
+        }
+
+        function mettreAJourStatutSync(statut) {
+            const statusElement = document.getElementById('syncStatus');
+            if (statusElement) {
+                statusElement.textContent = statut;
+            }
+        }
+
+        // === GESTION DE L'ÉTAT D'AUTHENTIFICATION ===
+        if (isFirebaseEnabled) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('userSection').classList.remove('hidden');
+                    document.getElementById('userName').textContent = user.displayName || user.email || "Utilisateur";
+                    
+                    // Charger les données depuis Firebase
+                    chargerDepuisFirebase();
+                } else {
+                    currentUser = null;
+                    document.getElementById('loginSection').classList.remove('hidden');
+                    document.getElementById('userSection').classList.add('hidden');
+                    
+                    // Charger les données locales
+                    chargerDonneesSauvegardees();
+                }
+            });
+        }
+
+        // === TOUTES VOS FONCTIONS EXISTANTES (identiques) ===
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isFirebaseEnabled) {
+                chargerDonneesSauvegardees();
+            }
+            initialiserEvenements();
+            
+            // Date d'aujourd'hui par défaut
+            document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+            
+            // Charger le premier mois
+            changerMois('mois1');
+            
+            // Mettre à jour tous les affichages
+            mettreAJourToutLAffichage();
+
+            // Enregistrer le service worker pour PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:application/javascript;base64,' + btoa(`
+                    const CACHE_NAME = 'running-tracker-v1';
+                    const urlsToCache = ['/'];
+                    
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => response || fetch(event.request))
+                        );
+                    });
+                `)).then(() => {
+                    console.log('✅ Service Worker enregistré');
+                }).catch((error) => {
+                    console.log('❌ Erreur Service Worker:', error);
+                });
+            }
+        });
+
+        function initialiserEvenements() {
+            // Événements pour les boutons de mois
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mois = this.getAttribute('data-mois');
+                    changerMois(mois);
+                });
+            });
+
+            // Événement pour le bouton de sauvegarde
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                if (editingId) {
+                    confirmerModification();
+                } else {
+                    enregistrerCourse();
+                }
+            });
+
+            // Événement pour le bouton d'effacement
+            document.getElementById('clearAllBtn').addEventListener('click', effacerToutesLesDonnees);
+        }
+
+        function changerMois(nouveauMois) {
+            // Retirer la classe active de tous les boutons
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Ajouter la classe active au bouton sélectionné
+            document.querySelector(`.phase-btn.${nouveauMois}`).classList.add('active');
+            
+            // Mettre à jour la variable globale
+            moisActuel = nouveauMois;
+            
+            // Mettre à jour l'affichage
+            mettreAJourProgramme();
+            mettreAJourObjectifs();
+            mettreAJourConseils();
+            mettreAJourProgression();
+            mettreAJourHistorique();
+        }
+
+        function mettreAJourProgramme() {
+            const programme = programmes[moisActuel];
+            const planificateur = document.getElementById('weekPlanner');
+            
+            if (!programme || !planificateur) return;
+            
+            const totalSeances = programme.seances.length;
+            const terminees = Object.keys(activitesTerminees).filter(cle => 
+                cle.startsWith(moisActuel) && activitesTerminees[cle]
+            ).length;
+            
+            const pourcentageProgres = totalSeances > 0 ? (terminees / totalSeances) * 100 : 0;
+            const angleDegres = (pourcentageProgres / 100) * 360;
+            
+            planificateur.innerHTML = `
+                <h3 style="margin-bottom: 10px; color: #333;">${programme.titre}</h3>
+                <p style="margin-bottom: 20px; color: #666; font-style: italic;">${programme.soustitre}</p>
+                <div class="week-grid">
+                    <div>
+                        ${programme.seances.slice(0, 2).map(seance => {
+                            const cleActivite = `${moisActuel}_${seance.jour}`;
+                            const estTerminee = activitesTerminees[cleActivite] ? 'completed' : '';
+                            return `
+                                <div class="day-item ${seance.type} ${estTerminee}" onclick="basculerTerminee('${cleActivite}')">
+                                    <div>
+                                        <span class="activity-icon">${seance.icone}</span>
+                                        <strong>${seance.jour}: ${seance.activite}</strong>
+                                    </div>
+                                    <small style="color: #666;">${seance.distance} • ${seance.duree}</small>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="gauge-container">
+                            <div class="gauge" style="--percentage: ${angleDegres}deg;">
+                                <div class="gauge-value">${Math.round(pourcentageProgres)}%</div>
+                            </div>
+                        </div>
+                        <p style="color: #666; margin-top: 10px;">Séances de la Semaine</p>
+                    </div>
+                    <div>
+                        ${programme.seances.slice(2).map(seance => {
+                            const cleActivite = `${moisActuel}_${seance.jour}`;
+                            const estTerminee = activitesTerminees[cleActivite] ? 'completed' : '';
+                            return `
+                                <div class="day-item ${seance.type} ${estTerminee}" onclick="basculerTerminee('${cleActivite}')">
+                                    <div>
+                                        <span class="activity-icon">${seance.icone}</span>
+                                        <strong>${seance.jour}: ${seance.activite}</strong>
+                                    </div>
+                                    <small style="color: #666;">${seance.distance} • ${seance.duree}</small>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.basculerTerminee = function(cleActivite) {
+            activitesTerminees[cleActivite] = !activitesTerminees[cleActivite];
+            sauvegarderDonnees();
+            mettreAJourProgramme();
+        };
+
+        function mettreAJourObjectifs() {
+            const programme = programmes[moisActuel];
+            if (!programme) return;
+            document.getElementById('monthlyObjectif').textContent = `${programme.kmMois} km/mois`;
+        }
+
+        function mettreAJourConseils() {
+            const programme = programmes[moisActuel];
+            const sectionConseils = document.getElementById('tipsSection');
+            
+            if (!programme || !sectionConseils) return;
+            
+            sectionConseils.innerHTML = `
+                <div class="tips-title">💡 Conseils pour ${programme.titre.split(':')[0]}</div>
+                <ul class="tips-list">
+                    ${programme.conseils.map(conseil => `<li>${conseil}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function enregistrerCourse() {
+            const date = document.getElementById('dateInput').value;
+            const typeSeance = document.getElementById('sessionType').value;
+            const distance = parseFloat(document.getElementById('distanceInput').value) || 0;
+            const duree = parseInt(document.getElementById('dureeInput').value) || 0;
+            const ressenti = parseInt(document.getElementById('ressentiInput').value) || 0;
+            const notes = document.getElementById('notesInput').value;
+
+            if (!date || !typeSeance || !distance) {
+                alert('Veuillez remplir au minimum la date, le type de séance et la distance !');
+                return;
+            }
+
+            const course = {
+                id: Date.now(),
+                date,
+                typeSeance,
+                distance,
+                duree,
+                ressenti,
+                notes,
+                mois: moisActuel
+            };
+
+            donneesEntrainement.push(course);
+            sauvegarderDonnees();
+            reinitialiserFormulaire();
+            mettreAJourToutLAffichage();
+            
+            alert('🎉 Course enregistrée avec succès !');
+        }
+
+        window.modifierCourse = function(idCourse) {
+            const course = donneesEntrainement.find(c => c.id === idCourse);
+            if (!course) {
+                alert('Course non trouvée !');
+                return;
+            }
+
+            // Remplir le formulaire
+            document.getElementById('dateInput').value = course.date;
+            document.getElementById('sessionType').value = course.typeSeance;
+            document.getElementById('distanceInput').value = course.distance;
+            document.getElementById('dureeInput').value = course.duree;
+            document.getElementById('ressentiInput').value = course.ressenti;
+            document.getElementById('notesInput').value = course.notes || '';
+
+            // Changer le mode édition
+            editingId = idCourse;
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = '✏️ Mettre à Jour la Course';
+            btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+            
+            // Scroll vers le formulaire
+            document.querySelector('.input-section').scrollIntoView({ behavior: 'smooth' });
+            
+            alert('📝 Formulaire rempli. Modifiez les valeurs et cliquez sur "Mettre à Jour".');
+        };
+
+        function confirmerModification() {
+            const date = document.getElementById('dateInput').value;
+            const typeSeance = document.getElementById('sessionType').value;
+            const distance = parseFloat(document.getElementById('distanceInput').value) || 0;
+            const duree = parseInt(document.getElementById('dureeInput').value) || 0;
+            const ressenti = parseInt(document.getElementById('ressentiInput').value) || 0;
+            const notes = document.getElementById('notesInput').value;
+
+            if (!date || !typeSeance || !distance) {
+                alert('Veuillez remplir au minimum la date, le type de séance et la distance !');
+                return;
+            }
+
+            const index = donneesEntrainement.findIndex(c => c.id === editingId);
+            if (index !== -1) {
+                donneesEntrainement[index] = {
+                    ...donneesEntrainement[index],
+                    date,
+                    typeSeance,
+                    distance,
+                    duree,
+                    ressenti,
+                    notes
+                };
+
+                sauvegarderDonnees();
+                annulerModification();
+                mettreAJourToutLAffichage();
+                
+                alert('✅ Course modifiée avec succès !');
+            }
+        }
+
+        window.supprimerCourse = function(idCourse) {
+            const course = donneesEntrainement.find(c => c.id === idCourse);
+            if (!course) return;
+
+            const confirmation = confirm(`🗑️ Supprimer cette course ?\n\n📅 ${new Date(course.date).toLocaleDateString('fr-FR')}\n🏃‍♂️ ${course.typeSeance}\n📏 ${course.distance}km`);
+            
+            if (confirmation) {
+                donneesEntrainement = donneesEntrainement.filter(c => c.id !== idCourse);
+                sauvegarderDonnees();
+                mettreAJourToutLAffichage();
+                alert('✅ Course supprimée !');
+            }
+        };
+
+        function annulerModification() {
+            editingId = null;
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = '💾 Enregistrer la Course';
+            btn.style.background = 'linear-gradient(135deg, #E91E63, #AD1457)';
+            reinitialiserFormulaire();
+        }
+
+        function reinitialiserFormulaire() {
+            document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('sessionType').value = '';
+            document.getElementById('distanceInput').value = '';
+            document.getElementById('dureeInput').value = '';
+            document.getElementById('ressentiInput').value = '';
+            document.getElementById('notesInput').value = '';
+        }
+
+        function sauvegarderDonnees() {
+            // Sauvegarder localement
+            localStorage.setItem('coursesData', JSON.stringify(donneesEntrainement));
+            localStorage.setItem('courseTerminees', JSON.stringify(activitesTerminees));
+            
+            // Sauvegarder dans Firebase si connecté
+            if (isFirebaseEnabled && currentUser) {
+                sauvegarderDansFirebase();
+            }
+        }
+
+        function chargerDonneesSauvegardees() {
+            const coursesData = localStorage.getItem('coursesData');
+            const terminees = localStorage.getItem('courseTerminees');
+            
+            if (coursesData) {
+                donneesEntrainement = JSON.parse(coursesData);
+            }
+            
+            if (terminees) {
+                activitesTerminees = JSON.parse(terminees);
+            }
+        }
+
+        function mettreAJourToutLAffichage() {
+            mettreAJourProgression();
+            mettreAJourHistorique();
+            mettreAJourAchievements();
+            mettreAJourStatsGlobales();
+        }
+
+        function mettreAJourProgression() {
+            const coursesDuMoisSelectionne = donneesEntrainement.filter(course => course.mois === moisActuel);
+            const totalMoisSelectionne = coursesDuMoisSelectionne.reduce((sum, c) => sum + c.distance, 0);
+            const totalGlobal = donneesEntrainement.reduce((sum, c) => sum + c.distance, 0);
+
+            const programme = programmes[moisActuel];
+            const objectifMoisSelectionne = programme ? programme.kmMois : 72;
+            const objectifGlobal = 892;
+
+            const pourcentMoisSelectionne = Math.round((totalMoisSelectionne / objectifMoisSelectionne) * 100);
+            const pourcentGlobal = Math.round((totalGlobal / objectifGlobal) * 100);
+
+            document.getElementById('monthlyRealise').textContent = `${totalMoisSelectionne.toFixed(1)} km`;
+            document.getElementById('totalRealise').textContent = `${totalGlobal.toFixed(1)} km`;
+
+            document.getElementById('monthlyPercentage').textContent = `${Math.min(pourcentMoisSelectionne, 100)}%`;
+            document.getElementById('totalPercentage').textContent = `${Math.min(pourcentGlobal, 100)}%`;
+
+            document.getElementById('monthlyProgress').style.width = `${Math.min(pourcentMoisSelectionne, 100)}%`;
+            document.getElementById('totalProgress').style.width = `${Math.min(pourcentGlobal, 100)}%`;
+        }
+
+        function mettreAJourStatsGlobales() {
+            const distanceTotal = donneesEntrainement.reduce((sum, c) => sum + c.distance, 0);
+            const sessionsTotal = donneesEntrainement.length;
+            
+            let tempsTotal = 0;
+            let distancePourAllure = 0;
+            
+            donneesEntrainement.forEach(course => {
+                if (course.duree && course.distance) {
+                    tempsTotal += course.duree;
+                    distancePourAllure += course.distance;
+                }
+            });
+            
+            let allureMoyenne = "0:00";
+            if (distancePourAllure > 0) {
+                const moyMinParKm = tempsTotal / distancePourAllure;
+                const minutes = Math.floor(moyMinParKm);
+                const secondes = Math.round((moyMinParKm - minutes) * 60);
+                allureMoyenne = `${minutes}:${secondes.toString().padStart(2, '0')}`;
+            }
+
+            document.getElementById('totalDistance').textContent = distanceTotal.toFixed(0);
+            document.getElementById('averagePace').textContent = allureMoyenne;
+            document.getElementById('totalSessions').textContent = sessionsTotal;
+        }
+
+        function mettreAJourHistorique() {
+            const divHistorique = document.getElementById('workoutHistory');
+            const contenuHistorique = document.getElementById('historyContent');
+            const resumeMois = document.getElementById('monthStats');
+
+            if (donneesEntrainement.length === 0) {
+                divHistorique.style.display = 'none';
+                return;
+            }
+
+            divHistorique.style.display = 'block';
+
+            const coursesTriees = [...donneesEntrainement].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const iconesSeances = {
+                endurance: '🟢',
+                tempo: '🟡',
+                fractionne: '🔴',
+                long: '🟣',
+                repos: '⚪'
+            };
+            
+            contenuHistorique.innerHTML = `
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${coursesTriees.map(course => {
+                        const iconeSeance = iconesSeances[course.typeSeance] || '🏃‍♂️';
+                        
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #E91E63;">
+                                <div style="flex: 1;">
+                                    <span>${iconeSeance} ${new Date(course.date).toLocaleDateString('fr-FR')}</span>
+                                    <br>
+                                    <small style="color: #666;">${course.typeSeance.charAt(0).toUpperCase() + course.typeSeance.slice(1)}</small>
+                                    ${course.notes ? `<br><small style="color: #888; font-style: italic;">"${course.notes}"</small>` : ''}
+                                </div>
+                                <div style="text-align: center; flex: 1;">
+                                    <strong>${course.distance}km</strong>
+                                    <br>
+                                    <small>${course.duree}min</small>
+                                </div>
+                                <div style="text-align: center; flex: 1;">
+                                    <span>😊${course.ressenti}/10</span>
+                                </div>
+                                <div style="display: flex; gap: 5px; flex: 0;">
+                                    <button class="action-btn edit" onclick="modifierCourse(${course.id})">
+                                        ✏️ Modifier
+                                    </button>
+                                    <button class="action-btn delete" onclick="supprimerCourse(${course.id})">
+                                        🗑️ Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            const coursesDuMoisSelectionne = donneesEntrainement.filter(course => course.mois === moisActuel);
+            const distanceTotal = coursesDuMoisSelectionne.reduce((sum, c) => sum + c.distance, 0);
+            const dureeTotal = coursesDuMoisSelectionne.reduce((sum, c) => sum + c.duree, 0);
+            const ressentiMoyen = coursesDuMoisSelectionne.length > 0 ? 
+                coursesDuMoisSelectionne.reduce((sum, c) => sum + c.ressenti, 0) / coursesDuMoisSelectionne.length : 0;
+
+            const nomMois = programmes[moisActuel] ? programmes[moisActuel].titre.split(':')[0] : 'Ce mois';
+
+            resumeMois.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-value">${coursesDuMoisSelectionne.length}</div>
+                    <div class="summary-label">Courses</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${distanceTotal.toFixed(1)}</div>
+                    <div class="summary-label">km</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${Math.round(dureeTotal)}</div>
+                    <div class="summary-label">Minutes</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${ressentiMoyen.toFixed(1)}</div>
+                    <div class="summary-label">Ressenti</div>
+                </div>
+                <div style="grid-column: span 4; text-align: center; margin-top: 10px; font-size: 0.9em; color: #666;">
+                    📊 Statistiques pour ${nomMois}
+                </div>
+            `;
+        }
+
+        function mettreAJourAchievements() {
+            const sectionAchievements = document.getElementById('achievementsSection');
+            const achievements = [];
+
+            const distanceTotal = donneesEntrainement.reduce((sum, c) => sum + c.distance, 0);
+            const sessionsTotal = donneesEntrainement.length;
+            const courseLaPlusLongue = Math.max(...donneesEntrainement.map(c => c.distance), 0);
+
+            if (sessionsTotal >= 1) achievements.push("Première course ! 🎯");
+            if (sessionsTotal >= 5) achievements.push("5 courses complétées ! 📅");
+            if (sessionsTotal >= 10) achievements.push("10 courses au compteur ! 💪");
+            if (sessionsTotal >= 25) achievements.push("Runner régulier ! 🏃‍♂️");
+            
+            if (distanceTotal >= 10) achievements.push("10km parcourus ! 🏁");
+            if (distanceTotal >= 25) achievements.push("25km au total ! 🎖️");
+            if (distanceTotal >= 50) achievements.push("50km franchis ! 🏆");
+            if (distanceTotal >= 100) achievements.push("100km de course ! 🌟");
+            
+            if (courseLaPlusLongue >= 5) achievements.push("5km d'affilée ! 💯");
+            if (courseLaPlusLongue >= 10) achievements.push("10km en une fois ! 🚀");
+
+            if (isFirebaseEnabled && currentUser) {
+                achievements.push("Compte synchronisé ! ☁️");
+            }
+
+            if (achievements.length > 0) {
+                sectionAchievements.innerHTML = `
+                    <h3 style="margin-bottom: 20px; color: #333;">🏆 Achievements Débloqués</h3>
+                    ${achievements.map(achievement => 
+                        `<div class="achievement-badge">${achievement}</div>`
+                    ).join('')}
+                `;
+            } else {
+                sectionAchievements.innerHTML = `
+                    <h3 style="margin-bottom: 20px; color: #333;">🏆 Achievements</h3>
+                    <p style="color: #666;">Commencez à courir pour débloquer vos premiers achievements !</p>
+                `;
+            }
+        }
+
+        function effacerToutesLesDonnees() {
+            const confirmation = confirm(`🚨 ATTENTION ! Effacer TOUTES vos données ?\n\n⚠️ Cette action est IRRÉVERSIBLE !`);
+            
+            if (confirmation) {
+                const confirmationFinale = prompt('Tapez exactement: EFFACER');
+                
+                if (confirmationFinale === 'EFFACER') {
+                    donneesEntrainement = [];
+                    activitesTerminees = {};
+                    editingId = null;
+                    
+                    localStorage.removeItem('coursesData');
+                    localStorage.removeItem('courseTerminees');
+                    
+                    if (isFirebaseEnabled && currentUser) {
+                        // Effacer aussi sur Firebase
+                        const coursesRef = collection(db, 'users', currentUser.uid, 'courses');
+                        getDocs(coursesRef).then((snapshot) => {
+                            snapshot.forEach((doc) => {
+                                deleteDoc(doc.ref);
+                            });
+                        });
+                        
+                        setDoc(doc(db, 'users', currentUser.uid, 'data', 'activities'), {
+                            activitesTerminees: {},
+                            lastSync: new Date()
+                        });
+                    }
+                    
+                    reinitialiserFormulaire();
+                    annulerModification();
+                    mettreAJourToutLAffichage();
+                    mettreAJourProgramme();
+                    
+                    alert('🗑️ Toutes les données effacées !');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
